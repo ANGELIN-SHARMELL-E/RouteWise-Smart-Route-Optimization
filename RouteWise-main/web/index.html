@@ -1,0 +1,213 @@
+<!DOCTYPE html><html><head>
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="A new Flutter project.">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="routewise">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png">
+
+  <title>routewise</title>
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Google Maps JS API — DirectionsService is part of core, no extra library needed -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAJGUYUdhVOmp1DoDe640xRLCE7JjFZdMw&amp;libraries=places"></script>
+
+  <script>
+    // Dart calls window.routewise_getDirections(lat1, lng1, lat2, lng2).
+    // Returns a Promise that resolves to a JSON string so Dart receives a plain
+    // string — no JS object crossing the boundary.
+    //   success -> { "success":true, "points":[[lat,lng],...], "distanceMeters":N, "durationSeconds":N }
+    //   failure -> { "success":false, "status":"STATUS_STRING" }
+    // Bridge: Places Autocomplete — returns a Promise resolving to a JSON string array of predictions.
+    // [{ placeId: string, description: string }, ...]
+    window.routewise_autocomplete = function(input) {
+      return new Promise(function(resolve) {
+        var svc = new google.maps.places.AutocompleteService();
+        svc.getPlacePredictions(
+          { input: input, types: ['geocode'] },
+          function(predictions, status) {
+            if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
+              resolve(JSON.stringify([]));
+              return;
+            }
+            var results = predictions.map(function(p) {
+              return { placeId: p.place_id, description: p.description };
+            });
+            resolve(JSON.stringify(results));
+          }
+        );
+      });
+    };
+
+    // Bridge: Place Details — returns a Promise resolving to a JSON string.
+    // { name, lat, lng } or null on failure.
+    window.routewise_placeDetails = function(placeId) {
+      return new Promise(function(resolve) {
+        var dummy = document.createElement('div');
+        var svc = new google.maps.places.PlacesService(dummy);
+        svc.getDetails(
+          { placeId: placeId, fields: ['name', 'formatted_address', 'geometry'] },
+          function(place, status) {
+            if (status !== google.maps.places.PlacesServiceStatus.OK || !place) {
+              resolve(JSON.stringify(null));
+              return;
+            }
+            resolve(JSON.stringify({
+              name: place.formatted_address || place.name,
+              lat: place.geometry.location.lat(),
+              lng: place.geometry.location.lng()
+            }));
+          }
+        );
+      });
+    };
+    // Bridge: Reverse Geocode — returns a Promise resolving to a JSON string.
+    window.routewise_reverseGeocode = function(lat, lng) {
+      return new Promise(function(resolve) {
+        var geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ location: { lat: lat, lng: lng } }, function(results, status) {
+          if (status !== 'OK' || !results || results.length === 0) {
+            resolve(JSON.stringify(null));
+            return;
+          }
+          resolve(JSON.stringify({
+            name: results[0].formatted_address,
+            placeId: results[0].place_id
+          }));
+        });
+      });
+    };
+
+    window.routewise_getDirections = function(originLat, originLng, destLat, destLng) {
+      return new Promise(function(resolve) {
+        var svc = new google.maps.DirectionsService();
+        svc.route(
+          {
+            origin: { lat: originLat, lng: originLng },
+            destination: { lat: destLat, lng: destLng },
+            travelMode: google.maps.TravelMode.DRIVING
+          },
+          function(result, status) {
+            if (status !== 'OK') {
+              resolve(JSON.stringify({ success: false, status: status }));
+              return;
+            }
+            var points = [];
+            var distanceMeters = 0;
+            var durationSeconds = 0;
+            var legs = result.routes[0].legs;
+            for (var li = 0; li < legs.length; li++) {
+              distanceMeters += legs[li].distance.value;
+              durationSeconds += legs[li].duration.value;
+              var steps = legs[li].steps;
+              for (var si = 0; si < steps.length; si++) {
+                var path = steps[si].path;
+                for (var pi = 0; pi < path.length; pi++) {
+                  points.push([path[pi].lat(), path[pi].lng()]);
+                }
+              }
+            }
+            resolve(JSON.stringify({
+              success: true,
+              points: points,
+              distanceMeters: distanceMeters,
+              durationSeconds: durationSeconds
+            }));
+          }
+        );
+      });
+    };
+  </script>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <style id="splash-screen-style">
+    html {
+      height: 100%
+    }
+
+    body {
+      margin: 0;
+      min-height: 100%;
+      background-color: #ffffff;
+      background-image: url("splash/img/light-background.png");
+      background-size: 100% 100%;
+    }
+
+    .center {
+      margin: 0;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      -ms-transform: translate(-50%, -50%);
+      transform: translate(-50%, -50%);
+    }
+
+    .contain {
+      display:block;
+      width:100%; height:100%;
+      object-fit: contain;
+    }
+
+    .stretch {
+      display:block;
+      width:100%; height:100%;
+    }
+
+    .cover {
+      display:block;
+      width:100%; height:100%;
+      object-fit: cover;
+    }
+
+    .bottom {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      -ms-transform: translate(-50%, 0);
+      transform: translate(-50%, 0);
+    }
+
+    .bottomLeft {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+    }
+
+    .bottomRight {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+    }
+  </style>
+  <script id="splash-screen-script">
+    function removeSplashFromWeb() {
+      document.getElementById("splash")?.remove();
+      document.getElementById("splash-branding")?.remove();
+      document.body.style.background = "transparent";
+    }
+  </script>
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+</head>
+<body>
+  
+  
+  
+  <script src="flutter_bootstrap.js" async=""></script>
+
+
+</body></html>

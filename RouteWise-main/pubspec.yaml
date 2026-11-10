@@ -1,0 +1,52 @@
+name: routewise
+description: "RouteWise - A premium route optimization and navigation helper application."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Icons
+  cupertino_icons: ^1.0.8
+
+  # State Management
+  provider: ^6.1.2
+
+  # Future Google Maps & Location Integration
+  google_maps_flutter: ^2.6.2
+  geolocator: ^11.0.0
+  http: ^1.2.0
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  shared_preferences: ^2.2.0
+
+  # Supabase
+  supabase_flutter: ^2.16.0
+
+  # URL Launcher for maps navigation
+  url_launcher: ^6.2.0
+
+  # Env configurations
+  flutter_dotenv: ^5.2.1
+
+  # Speech and Screen Lock utilities
+  flutter_tts: ^4.1.1
+  wakelock_plus: ^1.2.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.4.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - .env
+    - assets/logo/
